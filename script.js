@@ -1,100 +1,70 @@
-const input = document.getElementById("todo-input");
-const addBtn = document.getElementById("add-btn");
-const list = document.getElementById("todo-list");
+document.addEventListener("DOMContentLoaded", function () {
 
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  const hamburger = document.getElementById("hamburger");
+  const navLinks = document.getElementById("navLinks");
+  const themeToggle = document.getElementById("themeToggle");
 
-// Load existing tasks
-tasks.forEach(task => createTask(task));
+  hamburger.addEventListener("click", () => {
+    navLinks.classList.toggle("active");
+    hamburger.classList.toggle("active");
+  });
 
-addBtn.addEventListener("click", () => {
-  const taskText = input.value.trim();
-  if (!taskText) return;
+  document.querySelectorAll(".nav-links a").forEach(link => {
+    link.addEventListener("click", () => {
+      navLinks.classList.remove("active");
+      hamburger.classList.remove("active");
+    });
+  });
 
-  const task = { text: taskText, done: false };
-  tasks.push(task);
-  saveTasks();
-  createTask(task);
-  input.value = "";
+  if (localStorage.getItem("theme") === "light") {
+    document.body.classList.add("light");
+    themeToggle.textContent = "☀️";
+  }
+
+  themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("light");
+
+    if (document.body.classList.contains("light")) {
+      localStorage.setItem("theme", "light");
+      themeToggle.textContent = "☀️";
+    } else {
+      localStorage.setItem("theme", "dark");
+      themeToggle.textContent = "🌙";
+    }
+  });
+const sections = document.querySelectorAll(".section");
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("show");
+    }
+  });
+}, {
+  threshold: 0.2
 });
 
-function createTask(task) {
-  const li = document.createElement("li");
-  li.draggable = true;
-  li.textContent = task.text;
-  if (task.done) li.classList.add("done");
-
-  // Task click toggles done
-  li.addEventListener("click", (e) => {
-    if (e.target.classList.contains("delete-btn")) return;
-    task.done = !task.done;
-    li.classList.toggle("done");
-    saveTasks();
+sections.forEach(section => {
+  observer.observe(section);
+});
+const demoBtns = document.querySelectorAll(".live-demo-btn");
+demoBtns.forEach(btn => {
+  const target = document.getElementById(btn.dataset.target);
+  
+  btn.addEventListener("click", () => {
+    target.style.display = "flex";
   });
+});
 
-  // Delete button
-  const delBtn = document.createElement("button");
-  delBtn.textContent = "×";
-  delBtn.classList.add("delete-btn");
-  delBtn.addEventListener("click", () => {
-    const index = tasks.indexOf(task);
-    tasks.splice(index, 1);
-    li.remove();
-    saveTasks();
+const closeBtns = document.querySelectorAll(".close-btn");
+closeBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    btn.parentElement.parentElement.style.display = "none";
   });
-  li.appendChild(delBtn);
-
-  // Drag & Drop
-  li.addEventListener("dragstart", () => {
-    li.classList.add("dragging");
-  });
-
-  li.addEventListener("dragend", () => {
-    li.classList.remove("dragging");
-    reorderTasks();
-    saveTasks();
-  });
-
-  list.appendChild(li);
-}
-
-// Reorder tasks based on current DOM order
-function reorderTasks() {
-  const newTasks = [];
-  document.querySelectorAll("#todo-list li").forEach(li => {
-    const text = li.firstChild.textContent;
-    const task = tasks.find(t => t.text === text);
-    if (task) newTasks.push(task);
-  });
-  tasks = newTasks;
-}
-
-// Save to localStorage
-function saveTasks() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-// Drag & drop logic
-list.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  const dragging = document.querySelector(".dragging");
-  const afterElement = getDragAfterElement(list, e.clientY);
-  if (afterElement == null) {
-    list.appendChild(dragging);
-  } else {
-    list.insertBefore(dragging, afterElement);
+});
+window.addEventListener("click", (e) => {
+  const modal = document.querySelector(".modal");
+  if (e.target === modal) {
+    modal.style.display = "none";
   }
 });
-
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll("li:not(.dragging)")];
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
+});
